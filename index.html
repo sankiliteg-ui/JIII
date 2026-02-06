@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rose Day & Night | Annku Dii</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@700&family=Montserrat:wght@900&display=swap');
+        
+        body { 
+            margin: 0; 
+            background: #050101; 
+            overflow: hidden; 
+            font-family: 'Poppins', sans-serif;
+            touch-action: none;
+        }
+        
+        #canvas-container { position: fixed; top: 0; left: 0; z-index: 1; width: 100%; height: 100%; }
+        
+        .glass-ui {
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(255, 0, 0, 0.15);
+            width: 90%;
+        }
+
+        .blink-light { animation: blink 1.5s infinite alternate; }
+        @keyframes blink {
+            0% { opacity: 0.4; filter: drop-shadow(0 0 2px #ff0000); }
+            100% { opacity: 1; filter: drop-shadow(0 0 15px #ff4d4d); }
+        }
+
+        .desi-text { font-family: 'Kalam', cursive; }
+        .royal-text { font-family: 'Montserrat', sans-serif; text-transform: uppercase; letter-spacing: 3px; }
+        
+        .night-glow {
+            text-shadow: 0 0 10px #fff, 0 0 20px #7dd3fc, 0 0 30px #0ea5e9;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div id="canvas-container"></div>
+
+    <div id="ui-wrapper" class="glass-ui max-w-sm">
+        <div id="indicator" class="flex justify-center mb-3">
+            <div class="w-2.5 h-2.5 bg-red-600 rounded-full blink-light"></div>
+        </div>
+        
+        <div id="content-box">
+            <h2 class="text-rose-500 text-[10px] font-bold mb-1 royal-text">MAFIA DII</h2>
+            <h1 class="text-3xl font-black text-white mb-3 tracking-tighter">ANKKU DII</h1>
+            
+            <p id="main-text" class="text-gray-300 desi-text text-base mb-6 leading-relaxed">
+                "Dii, aap world ki best girl ho... <br>
+                par jab gussa karti ho toh seedha <br> 
+                <strong>sherni</strong> lagti ho!" 🦁
+            </p>
+        </div>
+
+        <button onclick="bloomRose()" id="btn" class="bg-white text-black font-bold py-3 px-10 rounded-full shadow-xl transition-all active:scale-90">
+            Open Surprise 
+        </button>
+        
+        <button onclick="transitionToNight()" id="night-btn" class="hidden bg-sky-600 text-white font-bold py-3 px-10 rounded-full shadow-xl transition-all active:scale-90 mt-4">
+            Ab Sone Jao 😴
+        </button>
+    </div>
+
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // --- STARS ---
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = 400;
+        const posArray = new Float32Array(starCount * 3);
+        for(let i=0; i < starCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 80;
+        }
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const starMaterial = new THREE.PointsMaterial({ size: 0.1, color: 0xffffff, transparent: true });
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+
+        // --- ROSE ---
+        const roseGroup = new THREE.Group();
+        const petalMat = new THREE.MeshStandardMaterial({ color: 0xff0033, roughness: 0.4, metalness: 0.1, side: THREE.DoubleSide });
+        for (let i = 0; i < 12; i++) {
+            const petalGeom = new THREE.SphereGeometry(1, 24, 24, 0, Math.PI * 2, 0, 0.5);
+            const petal = new THREE.Mesh(petalGeom, petalMat);
+            petal.scale.set(0.8, 1.3, 0.4);
+            petal.rotation.z = (Math.PI * 2 / 12) * i;
+            petal.rotation.x = 1.3;
+            roseGroup.add(petal);
+        }
+        roseGroup.scale.set(0, 0, 0);
+        scene.add(roseGroup);
+
+        const pointLight = new THREE.PointLight(0xff0044, 2, 50);
+        pointLight.position.set(2, 3, 4);
+        scene.add(pointLight);
+        const ambient = new THREE.AmbientLight(0x404040, 0.8);
+        scene.add(ambient);
+
+        camera.position.z = 6;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            stars.rotation.y += 0.0005;
+            pointLight.intensity = 1.5 + Math.sin(Date.now() * 0.003) * 0.5;
+            roseGroup.rotation.y += 0.01;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        function bloomRose() {
+            document.getElementById('btn').classList.add('hidden');
+            const wrapper = document.getElementById('ui-wrapper');
+            
+            gsap.to(wrapper, { y: -100, duration: 1, ease: "power2.out" });
+            gsap.to(roseGroup.scale, { x: 1.8, y: 1.8, z: 1.8, duration: 2, ease: "elastic.out(1, 0.5)" });
+            
+            setTimeout(() => {
+                const p = document.getElementById('main-text');
+                p.innerHTML = "<span class='text-white text-xl'>Happy Flower Day Ankku Dii</span><br><small class='text-rose-400'>rose nhii respect wala flower 😎🔥</small>";
+                gsap.from(p, { opacity: 0, y: 10, duration: 0.5 });
+                document.getElementById('night-btn').classList.remove('hidden');
+            }, 800);
+        }
+
+        function transitionToNight() {
+            document.getElementById('night-btn').classList.add('hidden');
+            
+            // 1. Fade Rose & Change Lights to Moon Blue
+            gsap.to(roseGroup.scale, { x: 0, y: 0, z: 0, duration: 1 });
+            gsap.to(pointLight.color, { r: 0.5, g: 0.8, b: 1, duration: 2 });
+            gsap.to(starMaterial.color, { r: 0.8, g: 0.9, b: 1, duration: 2 });
+            
+            // 2. Animate Background to Deep Blue Night
+            document.body.style.transition = "background 3s";
+            document.body.style.background = "radial-gradient(circle, #020617 0%, #000 100%)";
+
+            // 3. Change Text to Good Night
+            const content = document.getElementById('content-box');
+            gsap.to(content, { opacity: 0, duration: 0.5, onComplete: () => {
+                content.innerHTML = `
+                    <h1 class="text-5xl font-black text-white night-glow mb-4 royal-text">GOOD NIGHT</h1>
+                    <p class="text-sky-200 desi-text text-xl">
+                        "Chalo Mafia Dii, ab aankhein band karo... <br>
+                        Sapno mein bhi sherni ban kar raho!" 
+                    </p>
+                    <div class="mt-6 text-gray-500 text-[10px] tracking-widest">SUBH RATRI ANKKU DII</div>
+                `;
+                gsap.to(content, { opacity: 1, y: 20, duration: 1 });
+                // Change indicator to Blue
+                document.querySelector('.blink-light').style.background = "#0ea5e9";
+                document.querySelector('.blink-light').style.filter = "drop-shadow(0 0 10px #0ea5e9)";
+            }});
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
